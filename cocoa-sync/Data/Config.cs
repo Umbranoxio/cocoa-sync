@@ -6,6 +6,7 @@ public class Config
 {
     public List<string> PublisherIgnoreList { get; set; }
     public List<ProgramMapping> SelectedMappings { get; set; }
+    public List<KnownMapping> KnownMappings { get; set; }
 
     public Config()
     {
@@ -21,6 +22,12 @@ public class Config
             "Advanced Micro Devices, Inc.",
             "Realtek"
         };
+
+        KnownMappings = new List<KnownMapping>
+        {
+            new KnownMapping { PackageName = "Notepad++", ChocolateyId = "notepadplusplus" },
+        };
+
         SelectedMappings = new List<ProgramMapping>();
     }
 

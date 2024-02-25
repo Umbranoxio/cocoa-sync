@@ -12,12 +12,14 @@ public class ProgramSearcher
     private readonly HttpClient _httpClient;
     private readonly List<string> _publisherIgnoreList;
     private readonly Logger _logger = new Logger("main.log");
+    private readonly Config _config;
 
-    public ProgramSearcher(List<string> publisherIgnoreList, Logger logger)
+    public ProgramSearcher(List<string> publisherIgnoreList, Logger logger, Config config)
     {
         _httpClient = new HttpClient();
         _publisherIgnoreList = publisherIgnoreList;
         _logger = logger;
+        _config = config;
     }
 
     internal async Task<List<ProgramMapping>> GetMappings()
@@ -58,6 +60,12 @@ public class ProgramSearcher
         if (packageName == null)
         {
             throw new ArgumentNullException(nameof(packageName));
+        }
+
+        var knownMapping = _config.KnownMappings.FirstOrDefault(m => m.PackageName == packageName);
+        if (knownMapping != null && knownMapping.ChocolateyId != null)
+        {
+            return knownMapping.ChocolateyId;
         }
 
         string result = await _httpClient.GetStringAsync($"https://community.chocolatey.org/api/v2/Search()?$filter=IsLatestVersion&$skip=0&$top=30&searchTerm='{packageName}'&targetFramework=''&includePrerelease=false");

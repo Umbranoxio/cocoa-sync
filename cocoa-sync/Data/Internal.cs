@@ -13,4 +13,10 @@
         public string? Version { get; set; }
         public string? InstallDate { get; set; }
     }
+
+    public class KnownMapping
+    {
+        public string? PackageName { get; set; }
+        public string? ChocolateyId { get; set; }
+    }
 }

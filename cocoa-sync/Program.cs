@@ -9,7 +9,6 @@ namespace CocoaSync;
 
 public class Program
 {
-
     private static Config _config = Config.Load();
     private static Logger _logger = new Logger("main.log");
 
@@ -17,17 +16,30 @@ public class Program
     {
         IntitialChecks();
         ManagePublisherIgnoreList();
+
         var mappings = SearchForPrograms();
 
-        if (mappings != null)
+        if (mappings == null)
         {
-            DisplayFoundPrograms(mappings);
-            var selectedMappings = PromptForProgramSelection(mappings);
-            _config.SelectedMappings = selectedMappings.ToList();
-            Config.SaveToJson(_config);
-            InstallSelectedPrograms(selectedMappings);
-            AnsiConsole.MarkupLine("[green]All selected programs have been installed![/]");
+            AnsiConsole.MarkupLine("[red]Failed to find any locally installed programs on chocolatey. Press any key to exit.[/]");
+            Console.ReadKey();
+            Environment.Exit(1);
         }
+
+
+        AnsiConsole.MarkupLine($"[green]Found {mappings.Count} potential matches on chocolatey![/]");
+        AnsiConsole.WriteLine("Format: (Locally Installed Program) -> (Chcolatey Id)");
+        AnsiConsole.WriteLine("");
+
+        var selectedMappings = PromptForProgramSelection(mappings);
+
+        _config.SelectedMappings = selectedMappings.ToList();
+        Config.SaveToJson(_config);
+
+        InstallSelectedPrograms(selectedMappings);
+
+        AnsiConsole.MarkupLine("[green]All selected programs have been installed! Press any key to exit.[/]");
+
         Console.ReadKey();
     }
 
@@ -83,7 +95,7 @@ public class Program
 
     static List<ProgramMapping>? SearchForPrograms()
     {
-        var searcher = new ProgramSearcher(_config.PublisherIgnoreList, _logger);
+        var searcher = new ProgramSearcher(_config.PublisherIgnoreList, _logger, _config);
         List<ProgramMapping>? mappings = null;
 
         AnsiConsole.Status()
@@ -96,17 +108,11 @@ public class Program
         return mappings;
     }
 
-    static void DisplayFoundPrograms(List<ProgramMapping> mappings)
-    {
-        AnsiConsole.MarkupLine($"[green]Found {mappings.Count} potential matches on chocolatey![/]");
-        AnsiConsole.WriteLine("Format: (Locally Installed Program) -> (Chcolatey Id)");
-        AnsiConsole.WriteLine("");
-    }
 
     static IEnumerable<ProgramMapping> PromptForProgramSelection(List<ProgramMapping> mappings)
     {
         var prompt = new MultiSelectionPrompt<ProgramMapping>()
-            .Title("Please select the programs you wish to upgrade to chocolatey!")
+            .Title("[blue]Please select the programs you wish to upgrade to chocolatey![/]")
             .UseConverter(mapping => mapping.InstalledProgram != null
             ? $"({mapping.InstalledProgram.Name ?? ""}{(mapping.InstalledProgram.Version != null ? " - " + mapping.InstalledProgram.Version : string.Empty)}) -> ({mapping.ChocolateyId})"
             : $"(Unknown Program) -> ({mapping.ChocolateyId})")
