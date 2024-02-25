@@ -10,23 +10,12 @@ namespace CocoaSync;
 public class ProgramSearcher
 {
     private readonly HttpClient _httpClient;
-    private readonly string[] _vendorBlacklist;
+    private readonly List<string> _publisherIgnoreList;
 
-    public ProgramSearcher()
+    public ProgramSearcher(List<string> publisherIgnoreList)
     {
         _httpClient = new HttpClient();
-        _vendorBlacklist = new string[]
-        {
-                "NVIDIA Corporation",
-                "Microsoft Corporation",
-                "Microsoft",
-                "Python Software Foundation",
-                "Oracle Corporation",
-                "Adobe Inc",
-                "Unknown",
-                "Advanced Micro Devices, Inc.",
-                "Realtek"
-        };
+        _publisherIgnoreList = publisherIgnoreList;
     }
 
     internal async Task<List<ProgramMapping>> GetMappings()
@@ -37,7 +26,7 @@ public class ProgramSearcher
 
         foreach (var program in installedPrograms)
         {
-            if (IsVendorBlacklisted(program.Publisher))
+            if (IsPublisherIgnored(program.Publisher))
             {
                 continue;
             }
@@ -55,10 +44,10 @@ public class ProgramSearcher
         return mappings;
     }
 
-    private bool IsVendorBlacklisted(string? vendor)
+    private bool IsPublisherIgnored(string? publisher)
     {
-        if (vendor == null) return true;
-        return Array.Exists(_vendorBlacklist, element => element == vendor);
+        if (publisher == null) return true;
+        return _publisherIgnoreList.Contains(publisher);
     }
 
     public async Task<string> GetPackageId(string? packageName)

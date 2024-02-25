@@ -9,9 +9,24 @@ namespace CocoaSync;
 
 public class Program
 {
+
+    static List<string> publisherIgnoreList = new List<string>
+    {
+        "NVIDIA Corporation",
+        "Microsoft Corporation",
+        "Microsoft",
+        "Python Software Foundation",
+        "Oracle Corporation",
+        "Adobe Inc",
+        "Unknown",
+        "Advanced Micro Devices, Inc.",
+        "Realtek"
+    };
+
     static void Main()
     {
         IntitialChecks();
+        ManagePublisherIgnoreList();
         var mappings = SearchForPrograms();
 
         if (mappings != null)
@@ -22,6 +37,7 @@ public class Program
         }
         Console.ReadKey();
     }
+
 
     static void IntitialChecks()
     {
@@ -47,9 +63,33 @@ public class Program
         }
     }
 
+    static void ManagePublisherIgnoreList()
+    {
+        var useDefault = AnsiConsole.Confirm("Would you like to proceed with the application's default settings? This is recommended for most users.");
+        if (!useDefault)
+        {
+            var prompt = new MultiSelectionPrompt<string>()
+                .Title("Please select the publishers you'd prefer to exclude from our preset list")
+                .AddChoices(publisherIgnoreList);
+
+            publisherIgnoreList = AnsiConsole.Prompt(prompt).ToList();
+
+            var addCustom = AnsiConsole.Confirm("Would you like to add custom items to the ignore list?", false);
+            while (addCustom)
+            {
+                var customPublisher = AnsiConsole.Ask<string>("Enter the name of a publisher to add to the ignore list (or 'done' to finish):");
+                if (customPublisher.ToLower() == "done")
+                {
+                    break;
+                }
+                publisherIgnoreList.Add(customPublisher);
+            }
+        }
+    }
+
     static List<ProgramMapping>? SearchForPrograms()
     {
-        var searcher = new ProgramSearcher();
+        var searcher = new ProgramSearcher(publisherIgnoreList);
         List<ProgramMapping>? mappings = null;
 
         AnsiConsole.Status()
