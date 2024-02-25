@@ -78,6 +78,7 @@ public class Program
                 _config.PublisherIgnoreList.Add(customPublisher);
             }
         }
+        Config.SaveToJson(_config);
     }
 
     static List<ProgramMapping>? SearchForPrograms()
