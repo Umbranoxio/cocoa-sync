@@ -11,11 +11,13 @@ public class ProgramSearcher
 {
     private readonly HttpClient _httpClient;
     private readonly List<string> _publisherIgnoreList;
+    private readonly Logger _logger = new Logger("main.log");
 
-    public ProgramSearcher(List<string> publisherIgnoreList)
+    public ProgramSearcher(List<string> publisherIgnoreList, Logger logger)
     {
         _httpClient = new HttpClient();
         _publisherIgnoreList = publisherIgnoreList;
+        _logger = logger;
     }
 
     internal async Task<List<ProgramMapping>> GetMappings()
@@ -36,8 +38,9 @@ public class ProgramSearcher
                 var chocolateyId = await GetPackageId(program.Name);
                 mappings.Add(new ProgramMapping { InstalledProgram = program, ChocolateyId = chocolateyId });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.Log($"Failed to find package id for {program.Name}: {ex.Message}");
             }
         }
 

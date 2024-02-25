@@ -1,9 +1,9 @@
 ﻿namespace CocoaSync.Data
 {
-    internal class ProgramMapping
+    public class ProgramMapping
     {
-        internal InstalledProgram? InstalledProgram { get; set; }
-        internal string? ChocolateyId { get; set; }
+        public InstalledProgram? InstalledProgram { get; set; }
+        public string? ChocolateyId { get; set; }
     }
 
     public class InstalledProgram

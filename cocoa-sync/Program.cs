@@ -10,18 +10,8 @@ namespace CocoaSync;
 public class Program
 {
 
-    static List<string> publisherIgnoreList = new List<string>
-    {
-        "NVIDIA Corporation",
-        "Microsoft Corporation",
-        "Microsoft",
-        "Python Software Foundation",
-        "Oracle Corporation",
-        "Adobe Inc",
-        "Unknown",
-        "Advanced Micro Devices, Inc.",
-        "Realtek"
-    };
+    private static Config _config = Config.Load();
+    private static Logger _logger = new Logger("main.log");
 
     static void Main()
     {
@@ -33,7 +23,10 @@ public class Program
         {
             DisplayFoundPrograms(mappings);
             var selectedMappings = PromptForProgramSelection(mappings);
+            _config.SelectedMappings = selectedMappings.ToList();
+            Config.SaveToJson(_config);
             InstallSelectedPrograms(selectedMappings);
+            AnsiConsole.MarkupLine("[green]All selected programs have been installed![/]");
         }
         Console.ReadKey();
     }
@@ -70,9 +63,9 @@ public class Program
         {
             var prompt = new MultiSelectionPrompt<string>()
                 .Title("Please select the publishers you'd prefer to exclude from our preset list")
-                .AddChoices(publisherIgnoreList);
+                .AddChoices(_config.PublisherIgnoreList);
 
-            publisherIgnoreList = AnsiConsole.Prompt(prompt).ToList();
+            _config.PublisherIgnoreList = AnsiConsole.Prompt(prompt).ToList();
 
             var addCustom = AnsiConsole.Confirm("Would you like to add custom items to the ignore list?", false);
             while (addCustom)
@@ -82,14 +75,14 @@ public class Program
                 {
                     break;
                 }
-                publisherIgnoreList.Add(customPublisher);
+                _config.PublisherIgnoreList.Add(customPublisher);
             }
         }
     }
 
     static List<ProgramMapping>? SearchForPrograms()
     {
-        var searcher = new ProgramSearcher(publisherIgnoreList);
+        var searcher = new ProgramSearcher(_config.PublisherIgnoreList, _logger);
         List<ProgramMapping>? mappings = null;
 
         AnsiConsole.Status()
@@ -117,6 +110,16 @@ public class Program
             ? $"({mapping.InstalledProgram.Name ?? ""}{(mapping.InstalledProgram.Version != null ? " - " + mapping.InstalledProgram.Version : string.Empty)}) -> ({mapping.ChocolateyId})"
             : $"(Unknown Program) -> ({mapping.ChocolateyId})")
             .AddChoices(mappings);
+
+        // Pre-select the items in config.SelectedMappings
+        foreach (var selectedMapping in _config.SelectedMappings)
+        {
+            var mapping = mappings.FirstOrDefault(m => m.ChocolateyId == selectedMapping.ChocolateyId);
+            if (mapping != null)
+            {
+                prompt.Select(mapping);
+            }
+        }
 
         return AnsiConsole.Prompt(prompt);
     }
@@ -149,7 +152,7 @@ public class Program
         {
             if (process == null)
             {
-                AnsiConsole.MarkupLine($"[red]Failed to install {mapping.ChocolateyId}. Failed to create process.[/]");
+                _logger.Log($"[red]Failed to install {mapping.ChocolateyId}. Failed to create process.[/]", true);
                 return;
             }
 
@@ -168,15 +171,14 @@ public class Program
 
     static void LogProcessOutput(Process process, string chocolateyId)
     {
-        // Create a new log file with the Chocolatey ID as the name
-        using (var logFile = new StreamWriter(Path.Combine("logs", $"{chocolateyId}.log")))
+        // Create a new logger with the Chocolatey ID as the name
+        var logger = new Logger($"{chocolateyId}.log");
+
+        // Read the output from the process and log it
+        while (!process.StandardOutput.EndOfStream)
         {
-            // Read the output from the process and write it to the log file
-            while (!process.StandardOutput.EndOfStream)
-            {
-                var line = process.StandardOutput.ReadLine();
-                logFile.WriteLine(line);
-            }
+            var line = process.StandardOutput.ReadLine();
+            logger.Log(line);
         }
     }
 
@@ -186,11 +188,11 @@ public class Program
 
         if (process.ExitCode == 0)
         {
-            AnsiConsole.MarkupLine($"[green]Successfully installed {chocolateyId}![/]");
+            _logger.Log($"[green]Successfully installed {chocolateyId}![/]", true);
         }
         else
         {
-            AnsiConsole.MarkupLine($"[red]Failed to install {chocolateyId}.[/]");
+            _logger.Log($"[red]Failed to install {chocolateyId}.[/]", true);
         }
     }
 }
