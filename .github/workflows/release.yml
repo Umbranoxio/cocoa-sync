@@ -18,7 +18,7 @@ jobs:
         
     - name: Extract short SHA
       id: short_sha
-      run: echo "##[set-output name=sha;]$(echo ${GITHUB_SHA:0:6})
+      run: echo "##[set-output name=sha;]$(echo ${GITHUB_SHA:0:6})"
 
     - name: Build x64
       run: dotnet publish -c Release -r win-x64 --self-contained false /p:PublishSingleFile=true
