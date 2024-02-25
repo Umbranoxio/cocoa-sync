@@ -1,0 +1,56 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '5.0.x'
+
+    - name: Build x64
+      run: dotnet publish -c Release -r win-x64 --self-contained false /p:PublishSingleFile=true
+
+    - name: Build x86
+      run: dotnet publish -c Release -r win-x86 --self-contained false /p:PublishSingleFile=true
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+    - name: Upload x64 Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./cocoa-sync/bin/Release/net5.0/win-x64/publish/cocoa-sync.exe
+        asset_name: cocoa-sync-x64.exe
+        asset_content_type: application/octet-stream
+
+    - name: Upload x86 Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./cocoa-sync/bin/Release/net5.0/win-x86/publish/cocoa-sync.exe
+        asset_name: cocoa-sync-x86.exe
+        asset_content_type: application/octet-stream
