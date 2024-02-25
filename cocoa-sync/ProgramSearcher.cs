@@ -151,11 +151,11 @@ public class ProgramSearcher
         return result;
     }
 
+    internal readonly Regex removeExtraInfoRegex = new Regex(@"\s*\b(version|v|V)?\s*\d+(\.\d+)*\b|\s*\((.*?)\)\s*");
     internal string? RemoveExtraInfo(string? name)
     {
         if (name == null) { return null; }
-        Regex regex = new Regex(@"\s*\b(version|v|V)?\s*\d+(\.\d+)*\b|\s*\((.*?)\)\s*"); // This is cursed, but should remove version info, architecture info and any other info
-        string cleanedSoftware = regex.Replace(name, "");
+        string cleanedSoftware = removeExtraInfoRegex.Replace(name, string.Empty);
         return cleanedSoftware;
     }
 }
