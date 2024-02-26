@@ -24,7 +24,7 @@ Cocoa Sync is a tool inspired by `choco sync` designed to manage locally install
 
 ## ⬇️ Download
 
-You can download the latest release of Cocoa Sync from the [releases page](https://github.com/yourusername/cocoa-sync/releases/latest).
+You can download the latest release of Cocoa Sync from the [releases page](https://github.com/Umbranoxio/cocoa-sync/releases/latest).
 
 ## Configuration
 
