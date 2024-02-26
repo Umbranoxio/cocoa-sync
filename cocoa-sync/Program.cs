@@ -26,7 +26,6 @@ public class Program
             Environment.Exit(1);
         }
 
-
         AnsiConsole.MarkupLine($"[green]Found {mappings.Count} potential matches on chocolatey![/]");
         AnsiConsole.WriteLine("Format: (Locally Installed Program) -> (Chcolatey Id)");
         AnsiConsole.WriteLine("");
@@ -89,8 +88,8 @@ public class Program
                 }
                 _config.PublisherIgnoreList.Add(customPublisher);
             }
+            Config.SaveToJson(_config);
         }
-        Config.SaveToJson(_config);
     }
 
     static List<ProgramMapping>? SearchForPrograms()

@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
 
 namespace CocoaSync.Data;
 
@@ -57,7 +57,7 @@ public class Config
     {
         string configFilePath = GetConfigFilePath();
 
-        var json = JsonConvert.SerializeObject(config, Newtonsoft.Json.Formatting.Indented);
+        var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(configFilePath, json);
     }
 
@@ -71,7 +71,7 @@ public class Config
         }
 
         var json = File.ReadAllText(configFilePath);
-        var config = JsonConvert.DeserializeObject<Config>(json);
+        var config = JsonSerializer.Deserialize<Config>(json);
 
         return config ?? SaveDefaultConfig();
     }
